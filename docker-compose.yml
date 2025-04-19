@@ -10,14 +10,16 @@ services:
     devices:
       - /dev/ttyUSB0:/dev/ttyUSB0
     ports:
-      - "6969:6969/udp"
-      - "21110:21110"
-      - "9000:9000"
-      - "9001:9001"
-      - "9002:9002"
-      - "39539:39539"
-      - "39540:39540"
-      - "4768:4768/udp"
+      - "6969:6969/udp"       # Tracker data (SlimeVR default UDP port)
+      - "21110:21110"         # WebSocket VR Bridge for integrations
+      - "${WEBGUI_PORT}:80"   # Web GUI via Nginx (redirects with ?ip=...)
+      - "8266:8266"           # OTA firmware update
+      - "9000:9000"           # OSC output (shared by VRC and router)
+      - "9001:9001"           # VRC OSC input (VRChat tracking)
+      - "9002:9002"           # OSC Router input (for rerouting OSC)
+      - "39539:39539"         # VMC output (used by VSeeFace, etc.)
+      - "39540:39540"         # VMC input
+      - "4768:4768/udp"       # Tracker discovery / legacy LAN detection
     volumes:
       - slimevr-config:/root/.config/dev.slimevr.SlimeVR
       - slimevr-gui:/gui_mount
