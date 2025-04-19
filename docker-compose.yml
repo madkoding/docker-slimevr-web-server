@@ -1,0 +1,39 @@
+services:
+  slimevr:
+    build:
+      context: ./slimevr
+      args:
+        SLIMEVR_VERSION: ${SLIMEVR_VERSION}
+    container_name: slimevr
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    ports:
+      - "6969:6969/udp"
+      - "21110:21110"
+      - "9000:9000"
+      - "9001:9001"
+      - "9002:9002"
+      - "39539:39539"
+      - "39540:39540"
+      - "4768:4768/udp"
+    volumes:
+      - slimevr-config:/root/.config/dev.slimevr.SlimeVR
+      - slimevr-gui:/gui_mount
+
+  nginx:
+    build: ./nginx
+    container_name: slimevr_gui
+    restart: unless-stopped
+    environment:
+      SLIMEVR_IP: ${SLIMEVR_IP}
+      WEBGUI_PORT: ${WEBGUI_PORT}
+    ports:
+      - "${WEBGUI_PORT}:80"
+    volumes:
+      - slimevr-gui:/usr/share/nginx/html:ro
+
+volumes:
+  slimevr-config:
+  slimevr-gui:
