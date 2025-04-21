@@ -47,6 +47,8 @@ jobs:
           context: ./slimevr                       # path to SlimeVR Dockerfile
           platforms: linux/amd64,linux/arm64      # target architectures
           push: true                              # push image after successful build
+          build-args: |
+            SLIMEVR_VERSION=${{ env.SLIMEVR_VERSION }}
           tags: |
             madkoding/slimevr-server:latest
             madkoding/slimevr-server:${{ github.sha }}
