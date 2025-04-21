@@ -27,11 +27,11 @@ services:
     build: ./nginx
     container_name: slimevr_gui
     restart: unless-stopped
+    network_mode: host
     environment:
-      SLIMEVR_IP: ${SLIMEVR_IP}
       WEBGUI_PORT: ${WEBGUI_PORT}
     ports:
-      - "${WEBGUI_PORT}:80"
+      - "${WEBGUI_PORT}:${WEBGUI_PORT}"
     volumes:
       - slimevr-gui:/usr/share/nginx/html:ro
 
