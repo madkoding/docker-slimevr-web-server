@@ -39,7 +39,6 @@ Edit the `.env` file:
 ```env
 SLIMEVR_VERSION=0.14.1         # SlimeVR Server version to download
 WEBGUI_PORT=8080               # Port to serve the Web GUI
-SLIMEVR_IP=192.168.1.88        # LAN IP of the machine hosting the container
 ```
 
 ---
