@@ -1,16 +1,9 @@
 # 🦾 SlimeVR Server + Web GUI in Docker
 
-<!-- Pull count -->
+![Stars](https://img.shields.io/github/stars/madkoding/docker-slimevr-web-server) \
+![Forks](https://img.shields.io/github/forks/madkoding/docker-slimevr-web-server) \
+[![Publish Status](https://github.com/madkoding/docker-slimevr-web-server/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/madkoding/docker-slimevr-web-server/actions/workflows/docker-publish.yml) \
 ![Docker Pulls](https://img.shields.io/docker/pulls/madkoding/slimevr-web-server)
-
-<!-- Stars -->
-![Docker Stars](https://img.shields.io/docker/stars/madkoding/slimevr-web-server)
-
-<!-- Latest version -->
-![Docker Version](https://img.shields.io/docker/v/madkoding/slimevr-web-server)
-
-<!-- Image size (for a specific tag) -->
-![Image Size](https://img.shields.io/docker/image-size/madkoding/slimevr-web-server/latest)
 
 This project contains a complete Docker environment to run the [SlimeVR Server](https://github.com/SlimeVR/SlimeVR-Server) with a dynamic Web GUI, ideal for headless setups like Raspberry Pi, home servers, or LAN PCs.
 
