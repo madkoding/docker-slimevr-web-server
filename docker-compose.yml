@@ -5,6 +5,7 @@ services:
       args:
         SLIMEVR_VERSION: ${SLIMEVR_VERSION}
     container_name: slimevr
+    network_mode: host
     restart: unless-stopped
     privileged: true
     devices:
