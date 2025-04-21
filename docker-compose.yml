@@ -12,7 +12,6 @@ services:
     ports:
       - "6969:6969/udp"       # Tracker data (SlimeVR default UDP port)
       - "21110:21110"         # WebSocket VR Bridge for integrations
-      - "${WEBGUI_PORT}:80"   # Web GUI via Nginx (redirects with ?ip=...)
       - "8266:8266"           # OTA firmware update
       - "9000:9000"           # OSC output (shared by VRC and router)
       - "9001:9001"           # VRC OSC input (VRChat tracking)
