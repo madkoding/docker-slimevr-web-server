@@ -13,6 +13,9 @@ services:
       - /dev/ttyUSB0:/dev/ttyUSB0 # USB-Serial based on ch34x/pl2303
       - /dev/ttyACM0:/dev/ttyACM0 # CDC-ACM (ESP32-S3, nRF52, etc.)
       - /dev/hidraw0:/dev/hidraw0 # Dongles HID (opcional)
+      - /dev/dri:/dev/dri # GPU for WebGL
+    environment:
+      - LIBGL_ALWAYS_INDIRECT=0
     # ports:
     #   - "6969:6969/udp" # Tracker data (SlimeVR default UDP port)
     #   - "21110:21110" # WebSocket VR Bridge for integrations
@@ -25,6 +28,7 @@ services:
     #   - "4768:4768/udp" # Tracker discovery / legacy LAN detection
     group_add:
       - dialout
+      - video
     volumes:
       - slimevr-config:/root/.config/dev.slimevr.SlimeVR
       - slimevr-gui:/gui_mount

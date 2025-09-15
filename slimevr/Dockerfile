@@ -17,4 +17,5 @@ RUN apt-get update && \
 
 VOLUME ["/gui_mount"]
 
-CMD cp -r /gui/* /gui_mount && java -jar slimevr.jar run
+CMD cp -r /gui/* /gui_mount && java -XX:ActiveProcessorCount=$(nproc) -jar slimevr.jar run
+

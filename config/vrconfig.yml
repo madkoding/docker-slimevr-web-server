@@ -118,3 +118,6 @@ overlay:
   mirrored: false
   visible: false
 modelVersion: "14"
+ui:
+  maxFPS: 24
+
