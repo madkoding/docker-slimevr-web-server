@@ -1,0 +1,17 @@
+services:
+  slimevr:
+    network_mode: host
+    privileged: true
+    devices:
+      - /dev/dri:/dev/dri
+    ports: []
+    group_add:
+      - dialout
+      - video
+    volumes:
+      - /dev:/dev
+      - /run/udev:/run/udev:ro
+
+  nginx:
+    network_mode: host
+    ports: []

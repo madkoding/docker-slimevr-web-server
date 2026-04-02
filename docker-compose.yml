@@ -5,30 +5,19 @@ services:
       args:
         SLIMEVR_VERSION: ${SLIMEVR_VERSION}
     container_name: slimevr
-    network_mode: host
     restart: unless-stopped
-    privileged: true
-    devices:
-      - /dev/bus/usb:/dev/bus/usb # Mount every USB device
-      - /dev/ttyUSB0:/dev/ttyUSB0 # USB-Serial based on ch34x/pl2303
-      - /dev/ttyACM0:/dev/ttyACM0 # CDC-ACM (ESP32-S3, nRF52, etc.)
-      - /dev/hidraw0:/dev/hidraw0 # Dongles HID (opcional)
-      - /dev/dri:/dev/dri # GPU for WebGL
     environment:
       - LIBGL_ALWAYS_INDIRECT=0
-    # ports:
-    #   - "6969:6969/udp" # Tracker data (SlimeVR default UDP port)
-    #   - "21110:21110" # WebSocket VR Bridge for integrations
-    #   - "8266:8266" # OTA firmware update
-    #   - "9000:9000" # OSC output (shared by VRC and router)
-    #   - "9001:9001" # VRC OSC input (VRChat tracking)
-    #   - "9002:9002" # OSC Router input (for rerouting OSC)
-    #   - "39539:39539" # VMC output (used by VSeeFace, etc.)
-    #   - "39540:39540" # VMC input
-    #   - "4768:4768/udp" # Tracker discovery / legacy LAN detection
-    group_add:
-      - dialout
-      - video
+    ports:
+      - "6969:6969/udp" # Tracker data (SlimeVR default UDP port)
+      - "21110:21110" # WebSocket VR Bridge for integrations
+      - "8266:8266" # OTA firmware update
+      - "9000:9000" # OSC output (shared by VRC and router)
+      - "9001:9001" # VRC OSC input (VRChat tracking)
+      - "9002:9002" # OSC Router input (for rerouting OSC)
+      - "39539:39539" # VMC output (used by VSeeFace, etc.)
+      - "39540:39540" # VMC input
+      - "4768:4768/udp" # Tracker discovery / legacy LAN detection
     volumes:
       - slimevr-config:/root/.config/dev.slimevr.SlimeVR
       - slimevr-gui:/gui_mount
@@ -37,11 +26,10 @@ services:
     build: ./nginx
     container_name: slimevr_gui
     restart: unless-stopped
-    network_mode: host
     environment:
       WEBGUI_PORT: ${WEBGUI_PORT}
-    # ports:
-    #   - "${WEBGUI_PORT}:${WEBGUI_PORT}"
+    ports:
+      - "${WEBGUI_PORT}:${WEBGUI_PORT}"
     volumes:
       - slimevr-gui:/usr/share/nginx/html:ro
 
