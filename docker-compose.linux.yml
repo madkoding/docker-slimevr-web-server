@@ -1,17 +1,36 @@
 services:
   slimevr:
+    build:
+      context: ./slimevr
+      args:
+        SLIMEVR_VERSION: ${SLIMEVR_VERSION}
+    container_name: slimevr
+    restart: unless-stopped
+    environment:
+      - LIBGL_ALWAYS_INDIRECT=0
     network_mode: host
     privileged: true
     devices:
       - /dev/dri:/dev/dri
-    ports: []
     group_add:
       - dialout
       - video
     volumes:
+      - slimevr-config:/root/.config/dev.slimevr.SlimeVR
+      - slimevr-gui:/gui_mount
       - /dev:/dev
       - /run/udev:/run/udev:ro
 
   nginx:
+    build: ./nginx
+    container_name: slimevr_gui
+    restart: unless-stopped
+    environment:
+      WEBGUI_PORT: ${WEBGUI_PORT}
     network_mode: host
-    ports: []
+    volumes:
+      - slimevr-gui:/usr/share/nginx/html:ro
+
+volumes:
+  slimevr-config:
+  slimevr-gui:

@@ -7,6 +7,29 @@
 
 Run [SlimeVR Server](https://github.com/SlimeVR/SlimeVR-Server) and its Web GUI in Docker with a setup that works across Linux, macOS, and Windows, plus an optimized Linux hotplug mode for direct USB tracker usage.
 
+## Quick Start (Linux)
+
+1. Install Docker + Compose (`docker compose version` should work).
+2. Run:
+
+```bash
+docker compose up -d --build
+```
+
+3. Open:
+
+```text
+http://localhost:8080
+```
+
+Stop:
+
+```bash
+docker compose down
+```
+
+This repo defaults to Linux USB hotplug mode, so no extra `-f ...` flags are needed.
+
 ## Features
 
 - Auto-downloads `slimevr.jar` and `slimevr-gui-dist.tar.gz` from official releases
@@ -43,11 +66,23 @@ Edit `.env`:
 ```env
 SLIMEVR_VERSION=19.0.0-rc.1
 WEBGUI_PORT=8080
+COMPOSE_FILE=docker-compose.linux.yml
 ```
+
+`COMPOSE_FILE` selects which compose file is used by default.
+
+> On Linux, keep this enabled for direct USB tracker access.
+> On macOS/Windows, change it to `COMPOSE_FILE=docker-compose.yml`.
 
 ## Run
 
 ### Option A: Cross-platform default (Linux/macOS/Windows)
+
+```bash
+COMPOSE_FILE=docker-compose.yml docker compose up -d
+```
+
+Or set it in `.env` and run:
 
 ```bash
 docker compose up -d
@@ -58,7 +93,7 @@ This mode uses explicit port mappings and is the recommended default for Docker 
 ### Option B: Linux USB hotplug mode (recommended for direct USB trackers)
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.linux.yml up -d
+docker compose -f docker-compose.linux.yml up -d
 ```
 
 This mode enables host networking and mounts `/dev` + `/run/udev` for resilient USB/HID reattach behavior.
@@ -119,7 +154,7 @@ docker compose up -d --build
 For Linux hotplug mode:
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.linux.yml up -d --build
+docker compose -f docker-compose.linux.yml up -d --build
 ```
 
 ## Credits
@@ -136,4 +171,4 @@ MIT
 BTC: `bc1qrd3mexqu43qn0597d248725kdp3tr28252q64p`
 
 <!-- AUTO-UPDATE-DATE -->
-**Last updated:** 2026-04-02
+**Last updated:** 2026-04-03
