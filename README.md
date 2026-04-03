@@ -13,7 +13,7 @@ Run [SlimeVR Server](https://github.com/SlimeVR/SlimeVR-Server) and its Web GUI 
 2. Run:
 
 ```bash
-docker compose up -d --build
+./slimevrctl up
 ```
 
 3. Open:
@@ -25,10 +25,19 @@ http://localhost:8080
 Stop:
 
 ```bash
-docker compose down
+./slimevrctl down
 ```
 
 This repo defaults to Linux USB hotplug mode, so no extra `-f ...` flags are needed.
+
+Optional commands:
+
+```bash
+./slimevrctl status
+./slimevrctl logs
+./slimevrctl restart
+./slimevrctl doctor
+```
 
 ## Features
 
@@ -134,6 +143,7 @@ http://<HOST_IP>:<WEBGUI_PORT>/?ip=<HOST_IP>
 - `ERR_TOO_MANY_REDIRECTS`: ensure redirect is only applied when `?ip=` is missing.
 - Nginx error `server directive is not allowed here`: do not replace `nginx.conf` with a `server {}` block; use `conf.d/default.conf`.
 - Linux USB not detected: run with `docker-compose.linux.yml` (hotplug mode).
+- Seeing `Welcome to nginx!` on `:8080`: rebuild/restart with `./slimevrctl restart` to apply the GUI root config.
 - macOS/Windows USB passthrough: Docker Desktop does not expose raw USB devices to Linux containers like native Linux does. For direct USB trackers, use Linux (native/VM/WSL2 with USB/IP).
 - Port already in use (`6969` or `21110`): stop conflicting processes or containers.
 
@@ -171,4 +181,4 @@ MIT
 BTC: `bc1qrd3mexqu43qn0597d248725kdp3tr28252q64p`
 
 <!-- AUTO-UPDATE-DATE -->
-**Last updated:** 2026-04-03
+**Last updated:** 2026-04-04

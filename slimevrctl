@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: ./slimevrctl <command>
+
+Commands:
+  up       Build and start containers in background
+  down     Stop and remove containers
+  restart  Restart (down + up)
+  logs     Follow logs
+  status   Show container status
+  doctor   Run quick diagnostics
+EOF
+}
+
+require_docker() {
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "Error: docker is not installed or not in PATH."
+    exit 1
+  fi
+
+  if ! docker compose version >/dev/null 2>&1; then
+    echo "Error: docker compose plugin is required (docker compose)."
+    exit 1
+  fi
+}
+
+print_up_summary() {
+  local slimevr_status
+  local gui_status
+
+  slimevr_status="$(docker compose ps --status running --services | grep -x slimevr || true)"
+  gui_status="$(docker compose ps --status running --services | grep -x nginx || true)"
+
+  if [ -n "$slimevr_status" ]; then
+    echo "OK: slimevr UP"
+  else
+    echo "WARN: slimevr is not running"
+  fi
+
+  if [ -n "$gui_status" ]; then
+    echo "OK: slimevr_gui UP"
+  else
+    echo "WARN: slimevr_gui is not running"
+  fi
+
+  echo "URL: http://localhost:${WEBGUI_PORT:-8080}"
+}
+
+run_doctor() {
+  echo "== SlimeVR Doctor =="
+  echo
+
+  echo "[Docker]"
+  docker --version || true
+  docker compose version || true
+  echo
+
+  echo "[Compose services]"
+  docker compose ps || true
+  echo
+
+  echo "[Serial devices]"
+  if ls /dev/ttyACM* /dev/ttyUSB* >/dev/null 2>&1; then
+    ls /dev/ttyACM* /dev/ttyUSB* 2>/dev/null || true
+  else
+    echo "No /dev/ttyACM* or /dev/ttyUSB* found"
+  fi
+  echo
+
+  echo "[User groups]"
+  id -nG || true
+  echo
+
+  echo "[Container serial visibility]"
+  if docker compose ps --status running --services | grep -x slimevr >/dev/null 2>&1; then
+    docker compose exec -T slimevr sh -lc 'ls /dev/ttyACM* /dev/ttyUSB* 2>/dev/null || echo "No serial devices visible inside container"' || true
+  else
+    echo "slimevr service is not running"
+  fi
+  echo
+
+  echo "[Recent slimevr logs]"
+  docker compose logs --no-color --tail=40 slimevr || true
+}
+
+main() {
+  local cmd="${1:-}"
+  require_docker
+
+  case "$cmd" in
+    up)
+      docker compose up -d --build
+      print_up_summary
+      ;;
+    down)
+      docker compose down
+      ;;
+    restart)
+      docker compose down
+      docker compose up -d --build
+      print_up_summary
+      ;;
+    logs)
+      docker compose logs -f
+      ;;
+    status)
+      docker compose ps
+      ;;
+    doctor)
+      run_doctor
+      ;;
+    *)
+      usage
+      exit 1
+      ;;
+  esac
+}
+
+main "$@"

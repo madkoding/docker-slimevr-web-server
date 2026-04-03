@@ -2,7 +2,7 @@ server {
     listen ${WEBGUI_PORT};
     server_name localhost;
 
-    root /usr/share/nginx/html;
+    root /usr/share/nginx/html/renderer;
     index index.html;
 
     location = / {
