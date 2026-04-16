@@ -1,13 +1,18 @@
-FROM eclipse-temurin:17-jdk
+# syntax=docker/dockerfile:1.4
+FROM eclipse-temurin:21-jre
 
 ARG SLIMEVR_VERSION=latest
 ENV SLIMEVR_VERSION=${SLIMEVR_VERSION}
 
 WORKDIR /app
 
-RUN apt-get update && \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && \
     apt-get install -y --no-install-recommends curl libusb-1.0-0 udev && \
-    if [ "${SLIMEVR_VERSION}" = "latest" ] || [ -z "${SLIMEVR_VERSION}" ]; then \
+    apt-get clean
+
+RUN if [ "${SLIMEVR_VERSION}" = "latest" ] || [ -z "${SLIMEVR_VERSION}" ]; then \
         echo "Fetching latest SlimeVR version..." && \
         SLIMEVR_VERSION=$(curl -sL https://api.github.com/repos/SlimeVR/SlimeVR-Server/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/' | sed 's/^v//') && \
         echo "Latest version: ${SLIMEVR_VERSION}"; \
@@ -16,9 +21,7 @@ RUN apt-get update && \
     curl -L -o slimevr-gui-dist.tar.gz https://github.com/SlimeVR/SlimeVR-Server/releases/download/v${SLIMEVR_VERSION}/slimevr-gui-dist.tar.gz && \
     mkdir /gui && \
     tar -xzf slimevr-gui-dist.tar.gz -C /gui && \
-    rm slimevr-gui-dist.tar.gz && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
+    rm slimevr-gui-dist.tar.gz
 
 VOLUME ["/gui_mount"]
 
