@@ -1,4 +1,8 @@
 # syntax=docker/dockerfile:1.4
+# Running as root is required because:
+# - SlimeVR needs privileged mode for USB/HID tracker access
+# - Java process needs access to /dev nodes
+# - Docker container isolation provides the security boundary
 FROM eclipse-temurin:21-jre
 
 ARG SLIMEVR_VERSION=latest
@@ -25,4 +29,4 @@ RUN if [ "${SLIMEVR_VERSION}" = "latest" ] || [ -z "${SLIMEVR_VERSION}" ]; then 
 
 VOLUME ["/gui_mount"]
 
-CMD cp -r /gui/* /gui_mount && java -XX:ActiveProcessorCount=$(nproc) -jar slimevr.jar run --no-gui
+CMD ["sh", "-c", "cp -r /gui/* /gui_mount && exec java -XX:ActiveProcessorCount=$(nproc) -jar slimevr.jar run --no-gui"]
