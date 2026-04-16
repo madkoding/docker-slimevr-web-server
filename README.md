@@ -1,184 +1,103 @@
-# SlimeVR Server + Web GUI (Docker)
+# SlimeVR Docker
 
-![Stars](https://img.shields.io/github/stars/madkoding/docker-slimevr-web-server)
-![Forks](https://img.shields.io/github/forks/madkoding/docker-slimevr-web-server)
-[![Publish Status](https://github.com/madkoding/docker-slimevr-web-server/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/madkoding/docker-slimevr-web-server/actions/workflows/docker-publish.yml)
-![Docker Pulls](https://img.shields.io/docker/pulls/madkoding/slimevr-web-server)
+Run [SlimeVR Server](https://github.com/SlimeVR/SlimeVR-Server) + Web GUI in Docker.
 
-Run [SlimeVR Server](https://github.com/SlimeVR/SlimeVR-Server) and its Web GUI in Docker with a setup that works across Linux, macOS, and Windows, plus an optimized Linux hotplug mode for direct USB tracker usage.
-
-## Quick Start (Linux)
-
-1. Install Docker + Compose (`docker compose version` should work).
-2. Run:
+## Quick Start
 
 ```bash
-./slimevrctl up
-```
-
-3. Open:
-
-```text
-http://localhost:8080
+docker compose up -d --build
+open http://localhost:8080
 ```
 
 Stop:
-
 ```bash
-./slimevrctl down
+docker compose down
 ```
 
-This repo defaults to Linux USB hotplug mode, so no extra `-f ...` flags are needed.
+## What it does
 
-Optional commands:
+```mermaid
+sequenceDiagram
+    participant User
+    participant Nginx
+    participant SlimeVR
+    participant Tracker
 
-```bash
-./slimevrctl status
-./slimevrctl logs
-./slimevrctl restart
-./slimevrctl doctor
+    Note over SlimeVR: Starts, downloads latest version<br/>from GitHub automatically
+    SlimeVR->>Tracker: Detect trackers via USB/HID
+    SlimeVR->>Nginx: Copy GUI to /gui_mount
+    User->>Nginx: GET /:8080
+    Nginx-->>User: 302 → /?ip=<host_ip>
+    User->>Nginx: GET /?ip=<host_ip>
+    Nginx->>User: Serve SlimeVR Web GUI
+    User->>SlimeVR: WebSocket connections
+    Tracker->>SlimeVR: Tracking data (port 6969)
 ```
 
-## Features
+## Architecture
 
-- Auto-downloads `slimevr.jar` and `slimevr-gui-dist.tar.gz` from official releases
-- Single `.env` configuration for version and Web GUI port
-- Nginx-served Web GUI with automatic `?ip=` redirect
-- Cross-platform default compose profile (Docker Desktop friendly)
-- Linux override profile for stable USB/HID hotplug behavior
+| Container | Purpose | Network |
+|-----------|---------|---------|
+| `slimevr` | Java server + tracker comms | host |
+| `nginx` | Serves Web GUI | host |
 
-## Project Structure
-
-```text
-.
-|- .env
-|- docker-compose.yml
-|- docker-compose.linux.yml
-|- nginx/
-|  |- Dockerfile
-|  |- entrypoint.sh
-|  \- templates/
-|     \- default.conf.template
-\- slimevr/
-   \- Dockerfile
-```
-
-## Requirements
-
-- Docker Engine 24+ (or Docker Desktop)
-- Docker Compose v2 (`docker compose`)
+- **slimevr**: Downloads latest SlimeVR from GitHub, copies GUI to volume
+- **nginx**: Serves GUI, auto-redirects with `?ip=` parameter for WebSocket connection
 
 ## Configuration
 
-Edit `.env`:
+Create `.env` if you need custom values (all optional):
 
 ```env
-SLIMEVR_VERSION=19.0.0-rc.1
 WEBGUI_PORT=8080
-COMPOSE_FILE=docker-compose.linux.yml
+SLIMEVR_VERSION=latest
 ```
 
-`COMPOSE_FILE` selects which compose file is used by default.
-
-> On Linux, keep this enabled for direct USB tracker access.
-> On macOS/Windows, change it to `COMPOSE_FILE=docker-compose.yml`.
-
-## Run
-
-### Option A: Cross-platform default (Linux/macOS/Windows)
-
-```bash
-COMPOSE_FILE=docker-compose.yml docker compose up -d
-```
-
-Or set it in `.env` and run:
-
-```bash
-docker compose up -d
-```
-
-This mode uses explicit port mappings and is the recommended default for Docker Desktop users.
-
-### Option B: Linux USB hotplug mode (recommended for direct USB trackers)
-
-```bash
-docker compose -f docker-compose.linux.yml up -d
-```
-
-This mode enables host networking and mounts `/dev` + `/run/udev` for resilient USB/HID reattach behavior.
-
-## Access the Web GUI
-
-Open:
-
-```text
-http://<HOST_IP>:<WEBGUI_PORT>/
-```
-
-The GUI auto-redirects to:
-
-```text
-http://<HOST_IP>:<WEBGUI_PORT>/?ip=<HOST_IP>
-```
-
-## Ports
-
-| Service | Port(s) | Protocol |
-|---|---|---|
-| SlimeVR Trackers | 6969 | UDP |
-| Web GUI | `WEBGUI_PORT` | TCP |
-| WebSocket Bridge | 21110 | TCP |
-| OSC Router | 9000, 9002 | TCP/UDP |
-| VRC OSC | 9000, 9001 | TCP/UDP |
-| VMC | 39539, 39540 | TCP/UDP |
-| Legacy Discovery | 4768 | UDP |
+Without `.env`, defaults are used (port `8080`, latest version).
 
 ## Volumes
 
-- `slimevr-config`: persistent SlimeVR config (`vrconfig.yml`)
-- `slimevr-gui`: GUI static assets shared between app and Nginx
+| Volume | Purpose |
+|--------|---------|
+| `slimevr-config` | Persists `vrconfig.yml` |
+| `slimevr-gui` | GUI assets (slimevr → nginx) |
 
-## Troubleshooting
+## Ports
 
-- `ERR_TOO_MANY_REDIRECTS`: ensure redirect is only applied when `?ip=` is missing.
-- Nginx error `server directive is not allowed here`: do not replace `nginx.conf` with a `server {}` block; use `conf.d/default.conf`.
-- Linux USB not detected: run with `docker-compose.linux.yml` (hotplug mode).
-- Seeing `Welcome to nginx!` on `:8080`: rebuild/restart with `./slimevrctl restart` to apply the GUI root config.
-- macOS/Windows USB passthrough: Docker Desktop does not expose raw USB devices to Linux containers like native Linux does. For direct USB trackers, use Linux (native/VM/WSL2 with USB/IP).
-- Port already in use (`6969` or `21110`): stop conflicting processes or containers.
-
-Check conflicts:
-
-```bash
-sudo ss -ltnup | grep -E '(:6969|:21110)'
-```
+| Port | Protocol | Purpose |
+|------|----------|---------|
+| 6969 | UDP | Tracker data |
+| 8080 | TCP | Web GUI |
+| 21110 | TCP | WebSocket VR Bridge |
+| 9000-9002 | TCP/UDP | OSC |
+| 39539-39540 | TCP/UDP | VMC |
 
 ## Update
-
-To update SlimeVR, set a new `SLIMEVR_VERSION` in `.env` and recreate:
 
 ```bash
 docker compose up -d --build
 ```
 
-For Linux hotplug mode:
+Always downloads latest unless you set `SLIMEVR_VERSION` in `.env`.
+
+## Troubleshooting
 
 ```bash
-docker compose -f docker-compose.linux.yml up -d --build
+# Check status
+docker compose ps
+
+# View logs
+docker compose logs -f
+
+# Full diagnostics
+./slimevrctl doctor
 ```
 
 ## Credits
 
 - [SlimeVR](https://slimevr.dev/)
-- Web GUI assets from the official [SlimeVR releases](https://github.com/SlimeVR/SlimeVR-Server/releases)
+- GUI from official [SlimeVR releases](https://github.com/SlimeVR/SlimeVR-Server/releases)
 
 ## License
 
 MIT
-
-## Donations
-
-BTC: `bc1qrd3mexqu43qn0597d248725kdp3tr28252q64p`
-
-<!-- AUTO-UPDATE-DATE -->
-**Last updated:** 2026-04-04
