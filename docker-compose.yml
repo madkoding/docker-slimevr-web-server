@@ -26,6 +26,7 @@ services:
     group_add:
       - dialout
       - video
+      - ${SERIAL_GID:-984}
     volumes:
       - slimevr-config:/home/ubuntu/.config/dev.slimevr.SlimeVR
       - slimevr-gui:/gui_mount

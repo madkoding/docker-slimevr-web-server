@@ -55,6 +55,9 @@ Create `.env` if you need custom values (all optional):
 ```env
 WEBGUI_PORT=8080
 SLIMEVR_VERSION=latest
+# Optional: serial group id for /dev/ttyACM* access
+# On Arch this is typically 984 (uucp)
+SERIAL_GID=984
 ```
 
 Without `.env`, defaults are used (port `8080`, latest version).
