@@ -41,6 +41,10 @@ sequenceDiagram
 | `slimevr` | Java server + tracker comms | host |
 | `nginx` | Serves Web GUI | host |
 
+Healthchecks:
+- `slimevr`: validates the Java process is running
+- `nginx`: validates local HTTP response on `127.0.0.1:${WEBGUI_PORT}`
+
 - **slimevr**: Downloads latest SlimeVR from GitHub, copies GUI to volume
 - **nginx**: Serves GUI, auto-redirects with `?ip=` parameter for WebSocket connection
 
@@ -59,7 +63,7 @@ Without `.env`, defaults are used (port `8080`, latest version).
 
 | Volume | Purpose |
 |--------|---------|
-| `slimevr-config` | Persists `vrconfig.yml` |
+| `slimevr-config` | Persists SlimeVR config in `/home/ubuntu/.config/dev.slimevr.SlimeVR` |
 | `slimevr-gui` | GUI assets (slimevr → nginx) |
 
 ## Ports

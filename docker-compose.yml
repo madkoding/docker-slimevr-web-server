@@ -1,5 +1,16 @@
 services:
+  slimevr-init:
+    image: busybox:1.36
+    command: ["sh", "-c", "mkdir -p /gui_mount /config && chown -R 1000:1000 /gui_mount /config"]
+    restart: "no"
+    volumes:
+      - slimevr-config:/config
+      - slimevr-gui:/gui_mount
+
   slimevr:
+    depends_on:
+      slimevr-init:
+        condition: service_completed_successfully
     build:
       context: ./slimevr
       args:
@@ -16,12 +27,12 @@ services:
       - dialout
       - video
     volumes:
-      - slimevr-config:/root/.config/dev.slimevr.SlimeVR
+      - slimevr-config:/home/ubuntu/.config/dev.slimevr.SlimeVR
       - slimevr-gui:/gui_mount
       - /dev:/dev
       - /run/udev:/run/udev:ro
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6969"]
+      test: ["CMD-SHELL", "pgrep -f 'java .*slimevr.jar' > /dev/null"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -37,7 +48,7 @@ services:
     volumes:
       - slimevr-gui:/usr/share/nginx/html:ro
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:${WEBGUI_PORT:-8080}/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:${WEBGUI_PORT:-8080}/"]
       interval: 30s
       timeout: 5s
       retries: 3

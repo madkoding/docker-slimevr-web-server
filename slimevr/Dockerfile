@@ -1,20 +1,22 @@
 # syntax=docker/dockerfile:1.4
-# Running as root is required because:
-# - SlimeVR needs privileged mode for USB/HID tracker access
-# - Java process needs access to /dev nodes
-# - Docker container isolation provides the security boundary
+# SlimeVR still needs privileged mode for USB/HID device passthrough,
+# but the application process should run as a non-root user.
 FROM eclipse-temurin:21-jre
 
 ARG SLIMEVR_VERSION=latest
 ENV SLIMEVR_VERSION=${SLIMEVR_VERSION}
+ENV SLIMEVR_USER=ubuntu
+ENV SLIMEVR_HOME=/home/ubuntu
+ENV XDG_CONFIG_HOME=/home/ubuntu/.config
+ENV HOME=/home/ubuntu
 
 WORKDIR /app
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends curl libusb-1.0-0 udev && \
-    apt-get clean
+    rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /gui /gui_mount "${XDG_CONFIG_HOME}/dev.slimevr.SlimeVR"
 
 RUN if [ "${SLIMEVR_VERSION}" = "latest" ] || [ -z "${SLIMEVR_VERSION}" ]; then \
         echo "Fetching latest SlimeVR version..." && \
@@ -23,10 +25,12 @@ RUN if [ "${SLIMEVR_VERSION}" = "latest" ] || [ -z "${SLIMEVR_VERSION}" ]; then 
     fi && \
     curl -L -o slimevr.jar https://github.com/SlimeVR/SlimeVR-Server/releases/download/v${SLIMEVR_VERSION}/slimevr.jar && \
     curl -L -o slimevr-gui-dist.tar.gz https://github.com/SlimeVR/SlimeVR-Server/releases/download/v${SLIMEVR_VERSION}/slimevr-gui-dist.tar.gz && \
-    mkdir /gui && \
+    mkdir -p /gui && \
     tar -xzf slimevr-gui-dist.tar.gz -C /gui && \
     rm slimevr-gui-dist.tar.gz
 
-VOLUME ["/gui_mount"]
+RUN chown -R "${SLIMEVR_USER}:${SLIMEVR_USER}" /app /gui /gui_mount "${SLIMEVR_HOME}"
 
-CMD ["sh", "-c", "cp -r /gui/* /gui_mount && exec java -XX:ActiveProcessorCount=$(nproc) -jar slimevr.jar run --no-gui"]
+USER ubuntu
+
+CMD ["sh", "-c", "cp -r /gui/. /gui_mount/ && exec java -XX:ActiveProcessorCount=$(nproc) -jar slimevr.jar run --no-gui"]
