@@ -89,6 +89,21 @@ Always downloads latest unless you set `SLIMEVR_VERSION` in `.env`.
 
 ## Troubleshooting
 
+### Error: `failed to add ... veth ... operation not supported`
+
+If your Docker host/kernel does not support creating the default bridge/veth pair,
+the one-shot `slimevr-init` container can fail before startup. This project sets
+`network_mode: none` for that init container because it only prepares volumes and
+does not need network access.
+
+If you still hit this error, make sure your local `docker-compose.yml` includes:
+
+```yaml
+services:
+  slimevr-init:
+    network_mode: none
+```
+
 ```bash
 # Check status
 docker compose ps
