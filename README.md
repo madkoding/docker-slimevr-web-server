@@ -87,6 +87,41 @@ docker compose up -d --build
 
 Always downloads latest unless you set `SLIMEVR_VERSION` in `.env`.
 
+## USB / Serial Device Access
+
+SlimeVR needs access to USB serial devices (`/dev/ttyACM*`, `/dev/ttyUSB*`, `/dev/hidraw*`) to communicate with trackers.
+
+### Linux (native)
+
+The container runs as `ubuntu` (UID 1000) and is added to the `dialout` and `video` groups. Make sure your user owns or has access to the serial devices:
+
+```bash
+ls -l /dev/ttyACM0  # check device permissions
+getent group dialout # check dialout GID
+```
+
+If your distro uses a different group for serial devices (e.g. Arch uses `uucp`), add the GID in `.env`:
+
+```env
+SERIAL_GID=984    # Arch: uucp
+```
+
+Then uncomment `SERIAL_GID` in `docker-compose.yml` under `group_add`.
+
+### Windows (WSL2)
+
+Docker Desktop on WSL2 does **not** expose USB devices by default. You need [usbipd-win](https://github.com/dorssel/usbipd-win) to attach USB devices to WSL2:
+
+```powershell
+# Windows (Admin PowerShell)
+usbipd bind --busid <BUSID>
+usbipd attach --wsl --busid <BUSID>
+```
+
+### Diagnostics
+
+Run `./slimevrctl doctor` to check serial device visibility inside the container.
+
 ## Troubleshooting
 
 ### Error: `failed to add ... veth ... operation not supported`

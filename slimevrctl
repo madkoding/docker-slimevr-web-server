@@ -64,7 +64,8 @@ run_doctor() {
 
   echo "[Serial devices]"
   if ls /dev/ttyACM* /dev/ttyUSB* >/dev/null 2>&1; then
-    ls /dev/ttyACM* /dev/ttyUSB* 2>/dev/null || true
+    ls -l /dev/ttyACM* /dev/ttyUSB* 2>/dev/null || true
+    echo "Serial device GID(s): $(ls -ln /dev/ttyACM* /dev/ttyUSB* 2>/dev/null | awk '{print $4}' | sort -u)"
   else
     echo "No /dev/ttyACM* or /dev/ttyUSB* found"
   fi
@@ -72,11 +73,12 @@ run_doctor() {
 
   echo "[User groups]"
   id -nG || true
+  echo "Current user GID: $(id -g)"
   echo
 
   echo "[Container serial visibility]"
   if docker compose ps --status running --services | grep -x slimevr >/dev/null 2>&1; then
-    docker compose exec -T slimevr sh -lc 'ls /dev/ttyACM* /dev/ttyUSB* 2>/dev/null || echo "No serial devices visible inside container"' || true
+    docker compose exec -T slimevr sh -lc 'ls -l /dev/ttyACM* /dev/ttyUSB* 2>/dev/null || echo "No serial devices visible inside container"' || true
   else
     echo "slimevr service is not running"
   fi

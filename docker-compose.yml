@@ -20,14 +20,23 @@ services:
     restart: unless-stopped
     environment:
       - LIBGL_ALWAYS_INDIRECT=0
-    network_mode: host
+    ports:
+      - "6969:6969"
+      - "6969:6969/udp"
+      - "21110:21110"
+      - "9000-9002:9000-9002"
+      - "9000-9002:9000-9002/udp"
+      - "39539-39540:39539-39540"
+      - "39539-39540:39539-39540/udp"
     privileged: true
     devices:
       - /dev/dri:/dev/dri
+    # Add SERIAL_GID in .env if your distro uses a different serial group
+    # (e.g. Arch: SERIAL_GID=984 for uucp)
     group_add:
       - dialout
       - video
-      - ${SERIAL_GID:-984}
+      # - ${SERIAL_GID}
     volumes:
       - slimevr-config:/home/ubuntu/.config/dev.slimevr.SlimeVR
       - slimevr-gui:/gui_mount
@@ -46,7 +55,8 @@ services:
     restart: unless-stopped
     environment:
       WEBGUI_PORT: ${WEBGUI_PORT:-8080}
-    network_mode: host
+    ports:
+      - "${WEBGUI_PORT:-8080}:${WEBGUI_PORT:-8080}"
     volumes:
       - slimevr-gui:/usr/share/nginx/html:ro
     healthcheck:

@@ -7,7 +7,7 @@ server {
 
     location = / {
         if ($args !~ "ip=") {
-            return 302 http://${SLIMEVR_IP}:${WEBGUI_PORT}/?ip=${SLIMEVR_IP};
+            return 302 http://$host:${WEBGUI_PORT}/?ip=$host;
         }
     }
 
