@@ -31,6 +31,9 @@ RUN if [ "${SLIMEVR_VERSION}" = "latest" ] || [ -z "${SLIMEVR_VERSION}" ]; then 
 
 RUN chown -R "${SLIMEVR_USER}:${SLIMEVR_USER}" /app /gui /gui_mount "${SLIMEVR_HOME}"
 
-USER ubuntu
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-CMD ["sh", "-c", "cp -r /gui/. /gui_mount/ && exec java -XX:ActiveProcessorCount=$(nproc) -jar slimevr.jar run --no-gui"]
+# ENTRYPOINT runs as root to fix device permissions, then drops to ubuntu via runuser
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["sh", "-c", "exec java -XX:ActiveProcessorCount=$(nproc) -jar slimevr.jar run --no-gui"]
