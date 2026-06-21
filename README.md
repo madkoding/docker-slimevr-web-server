@@ -38,8 +38,8 @@ sequenceDiagram
 
 | Container | Purpose | Network |
 |-----------|---------|---------|
-| `slimevr` | Java server + tracker comms | host |
-| `nginx` | Serves Web GUI | host |
+| `slimevr` | Java server + tracker comms | bridge (port mapped) |
+| `nginx` | Serves Web GUI | bridge (port mapped) |
 
 Healthchecks:
 - `slimevr`: validates the Java process is running
@@ -87,20 +87,18 @@ docker compose up -d --build
 
 Always downloads latest unless you set `SLIMEVR_VERSION` in `.env`.
 
-## USB / Serial Device Access
+## Device Access
 
-SlimeVR needs access to USB serial devices (`/dev/ttyACM*`, `/dev/ttyUSB*`, `/dev/hidraw*`) to communicate with trackers.
+SlimeVR needs access to USB HID devices (`/dev/hidraw*` and `/dev/ttyACM*`) to communicate with trackers. The container handles this automatically:
 
-### Linux (native)
+1. **Entrypoint** (`slimevr/entrypoint.sh`) runs as root at startup and sets permissions to `660` / group `dialout` on all `/dev/hidraw*` devices.
+2. **Background watcher** polls every 2 seconds to fix permissions on newly hotplugged devices. It also detects USB disconnect/reconnect cycles and restarts the Java process cleanly (SlimeVR's HID manager throws `NullPointerException` on hotplug).
 
-The container runs as `ubuntu` (UID 1000) and is added to the `dialout` and `video` groups. Make sure your user owns or has access to the serial devices:
+No manual udev rules or permission changes are needed on the host.
 
-```bash
-ls -l /dev/ttyACM0  # check device permissions
-getent group dialout # check dialout GID
-```
+### Group configuration
 
-If your distro uses a different group for serial devices (e.g. Arch uses `uucp`), add the GID in `.env`:
+The container drops privileges to user `ubuntu` (UID 1000) and is added to the `dialout` and `video` groups. If your distro uses a different serial group (e.g. Arch uses `uucp`), add the GID in `.env`:
 
 ```env
 SERIAL_GID=984    # Arch: uucp
@@ -118,9 +116,24 @@ usbipd bind --busid <BUSID>
 usbipd attach --wsl --busid <BUSID>
 ```
 
+When you detach and re-attach a device via usbipd, the background watcher inside the container will automatically restore connectivity.
+
+## Management
+
+A convenience script is provided for common operations:
+
+```bash
+./slimevrctl up       # Build and start in background
+./slimevrctl down     # Stop and remove containers
+./slimevrctl restart  # Restart (down + up)
+./slimevrctl logs     # Follow logs
+./slimevrctl status   # Show container status
+./slimevrctl doctor   # Diagnostics (serial, groups, logs)
+```
+
 ### Diagnostics
 
-Run `./slimevrctl doctor` to check serial device visibility inside the container.
+Run `./slimevrctl doctor` to check device visibility inside the container.
 
 ## Troubleshooting
 
@@ -148,6 +161,14 @@ docker compose logs -f
 
 # Full diagnostics
 ./slimevrctl doctor
+```
+
+### Error: tracker detected then lost after USB reconnect
+
+SlimeVR's HID manager cannot gracefully handle device removal/re-attachment. The background watcher in `entrypoint.sh` detects hotplug cycles and automatically restarts the container. If the automatic restart does not trigger (e.g. due to timing), run:
+
+```bash
+docker compose restart slimevr
 ```
 
 ## Credits
