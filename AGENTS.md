@@ -88,3 +88,5 @@ Copy `.env.example` to `.env` to customize.
 - The SlimeVR server runs with `--no-gui` flag; the GUI is served separately by nginx.
 - The nginx config auto-redirects requests to append `?ip=<host_ip>` for WebSocket connections.
 - The slimevr entrypoint (`slimevr/entrypoint.sh`) runs as root to fix `/dev/hidraw*` permissions (changing mode to 660 and group to dialout), then drops privileges to the `ubuntu` user via `runuser` before executing the server.
+- A background watcher polls every 2s to fix permissions on newly hotplugged hidraw devices.
+- It also detects USB disconnect/reconnect cycles and restarts the Java process (via `pkill slimevr.jar`), because SlimeVR's HID manager cannot gracefully handle device removal/re-attachment and throws `NullPointerException`.

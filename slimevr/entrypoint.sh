@@ -15,11 +15,46 @@ fix_hidraw() {
 # Fix existing devices at startup
 fix_hidraw
 
-# Background watcher: polls for new hidraw devices (e.g. after USB
-# detach/re-attach via Windows usbipd) and fixes permissions on the fly.
+# Background watcher:
+#   1. Fixes permissions on new hidraw devices (hotplug).
+#   2. Detects USB disconnect/reconnect and restarts Java cleanly.
+#      SlimeVR's HID manager throws NullPointerException after device
+#      hotplug, so the only reliable fix is to restart the process.
 (
+    known_ids=""
+    had_initial_connection=false
+    was_disconnected=false
+
     while true; do
         fix_hidraw
+
+        # Collect current device IDs (major:minor) to detect changes
+        current_ids=""
+        has_devices=false
+        for dev in /dev/hidraw*; do
+            if [ -e "$dev" ]; then
+                has_devices=true
+                id=$(stat -c "%t:%T" "$dev" 2>/dev/null)
+                current_ids="$current_ids $id"
+            fi
+        done
+
+        if $has_devices; then
+            if ! $had_initial_connection; then
+                had_initial_connection=true
+            elif $was_disconnected || { [ -n "$known_ids" ] && [ "$current_ids" != "$known_ids" ]; }; then
+                # Hotplug detected: device was removed and re-attached.
+                # Kill Java to trigger a clean container restart via Docker.
+                pkill -f "slimevr.jar" 2>/dev/null || true
+            fi
+            known_ids=$current_ids
+            was_disconnected=false
+        else
+            if $had_initial_connection; then
+                was_disconnected=true
+            fi
+        fi
+
         sleep 2
     done
 ) &
